@@ -156,6 +156,26 @@ def run_status(
             console.print(f"  budget remaining (API-equiv): ${summary['budget_remaining_usd']}")
 
 
+@app.command("critics")
+def run_critics(
+    vault_tag: str = typer.Argument(..., help="Run to review"),
+    json_output: bool = typer.Option(False, "--json", "-j", help="JSON output"),
+) -> None:
+    """Run the four step 12 reviewers with GPT-6.2 Astra through Codex."""
+    from hyperresearch.core.critics import run_critics as review
+    from hyperresearch.core.levers import LeverError
+    from hyperresearch.core.profiles import ProfileError
+    from hyperresearch.core.runs import RunError
+
+    vault = _vault_or_exit(json_output)
+    try:
+        result = review(vault, vault_tag)
+    except (LeverError, OSError, ProfileError, RunError, ValueError, VaultError) as exc:
+        output(error(str(exc), "CRITICS_ERROR", vault=str(vault.root)), json_mode=json_output)
+        raise typer.Exit(1) from exc
+    output(success(result, count=len(result["critics"]), vault=str(vault.root)), json_mode=json_output)
+
+
 @app.command("list")
 def run_list(
     json_output: bool = typer.Option(False, "--json", "-j", help="JSON output"),

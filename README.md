@@ -224,7 +224,7 @@ Use `--effort` or `/effort` for the main session and leave `CLAUDE_CODE_EFFORT_L
 
 ### Subagent roster
 
-Models are profile config, not hardcode. The table shows the shipped defaults, and you can override any of them in `.hyperresearch/config.toml`: `[profile.full]` with `models = { fetcher = "haiku" }` swaps every fetcher to Haiku on the next install or `profile use`.
+The table shows the shipped Claude Code defaults. For native subagents, override the model in `.hyperresearch/config.toml`. For example, `models = { fetcher = "haiku" }` under `[profile.full]` gives fetchers Haiku on the next install or `profile use`.
 
 | Agent | Claude Code model | Effort | Role |
 |---|---|---|---|
@@ -235,10 +235,7 @@ Models are profile config, not hardcode. The table shows the shipped defaults, a
 | `hyperresearch-corpus-critic` | Opus | `high` | "What source would overturn the current direction?" pre-draft gap analysis |
 | `hyperresearch-draft-orchestrator` | Opus | `high` | One per draft angle. Reads its curated source list and writes one draft. |
 | `hyperresearch-synthesizer` | Opus | `high` | Reads all 3 drafts, writes the final report (two-pass write, Read+Write locked) |
-| `hyperresearch-dialectic-critic` | Opus | `high` | Counter-evidence the draft missed |
-| `hyperresearch-depth-critic` | Opus | `high` | Shallow spots interim notes could fill |
-| `hyperresearch-width-critic` | Opus | `high` | Topical corners the corpus supports but the draft ignores |
-| `hyperresearch-instruction-critic` | Opus | `high` | Structural mismatches against the prompt's atomic items |
+| Step 12 critics via Codex CLI | GPT-6.2 Astra | `xhigh` | Four independent reviews for counter-evidence, depth, coverage, and instruction following |
 | `hyperresearch-patcher` | Opus | `high` | Tool-locked `[Read, Edit]`. Applies critic findings as surgical Edit hunks |
 | `hyperresearch-cite-checker` | Opus | `high` | Skeptically verifies sampled citation-sentence bindings before ship |
 | `hyperresearch-polish-auditor` | Opus | `medium` | Tool-locked `[Read, Edit]`. Cuts filler, strips hygiene leaks |
@@ -248,6 +245,8 @@ Models are profile config, not hardcode. The table shows the shipped defaults, a
 The fetchers use `high` effort for judging source relevance, following references to primary sources, and reading figures or evidence on complex pages. The `light` draft draws directly on the fetched notes. The regular fetcher also extracts structured claims with verbatim support, numbers, entities, and scope. In `full` runs, those claims feed the evidence digest in step 9 and the mechanical citation triage in step 14.5. Higher effort can increase usage across parallel batches.
 
 Step 5 requests `xhigh` for up to two high-impact investigations when the Agent tool supports per-call effort and the investigator's model supports `xhigh`.
+
+Claude Code's `full` and `dissertation` runs use `codex exec` for step 12. Put Codex CLI on `PATH` and use `codex login` with an account that can access GPT-6.2 Astra. The reviewers have read-only access to the draft and evidence. Each attempt saves Codex event logs under `research/runs/<vault_tag>/temp/astra-critics-*/`. After all four reviews pass validation, the runner publishes the findings and records the requested model, effort, and Codex thread IDs in `review.json`.
 
 ---
 
@@ -477,7 +476,7 @@ Publishers block their own open-access PDFs often enough that one attempt isn't 
 
 - It doesn't replace your judgment on which sources matter. The agent picks, you steer.
 - It can't fetch what's behind a paywall you haven't logged into. Open-access recovery finds a legal free copy when one exists — even when the publisher blocks the fetch outright — but when none exists you get the abstract, or nothing, and the note says so.
-- On Claude Code it runs on Anthropic models via the subagent roster (per-agent assignments come from the profile's model map). On Codex, subagents use the session's model unless a Codex override is configured. Usage scales with tier, gear, and corpus size. The Codex port is new and has not been benchmarked yet; the Claude Code pipeline is the one that has been benchmarked.
+- On Claude Code, native subagents use the profile's model map and step 12 uses GPT-6.2 Astra via Codex CLI. On Codex, subagents use the session's model unless a Codex override is configured. Usage scales with tier, gear, and corpus size. The Claude Code pipeline was benchmarked with the native critics.
 - The lint gate catches **structural** failures (missing scaffold, broken provenance, unresolved CRITICALs). It cannot guarantee factual accuracy, that's still your call.
 
 ---
