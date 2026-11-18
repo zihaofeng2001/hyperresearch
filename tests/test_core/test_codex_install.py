@@ -195,9 +195,13 @@ def test_codex_install_tree(tmp_vault):
         assert data["sandbox_mode"] == "workspace-write"
         assert "model" not in data  # inherit the session model by default
 
-    # opus-class Claude roles get high effort, sonnet roles medium
+    # Codex keeps its own defaults when a Claude role changes model.
     assert agents["hyperresearch-synthesizer.toml"]["model_reasoning_effort"] == "high"
-    assert agents["hyperresearch-fetcher.toml"]["model_reasoning_effort"] == "medium"
+    for role in (
+        "fetcher", "source-analyst", "loci-analyst", "depth-investigator",
+        "corpus-critic", "cite-checker",
+    ):
+        assert agents[f"hyperresearch-{role}.toml"]["model_reasoning_effort"] == "medium"
 
     hooks = json.loads((root / ".codex" / "hooks.json").read_text(encoding="utf-8"))
     assert list(hooks["hooks"]) == ["Stop"]  # no PreToolUse on Codex
@@ -229,7 +233,9 @@ def test_codex_model_override_from_profile(tmp_vault):
     cfg = tmp_vault.root / ".hyperresearch" / "config.toml"
     cfg.write_text(
         cfg.read_text(encoding="utf-8")
-        + '\n[profile.full]\ncodex_models = { fetcher = "gpt-5.4-mini", critics = "gpt-5.5" }\n',
+        + '\n[profile.full]\n'
+        'codex_models = { fetcher = "gpt-5.4-mini", critics = "gpt-5.5" }\n'
+        'models = { source_analyst = "opus", loci_analyst = "sonnet" }\n',
         encoding="utf-8",
     )
     install_hooks(tmp_vault.root, "hyperresearch", platform="codex")
@@ -238,6 +244,11 @@ def test_codex_model_override_from_profile(tmp_vault):
     assert agents["hyperresearch-dialectic-critic.toml"]["model"] == "gpt-5.5"
     assert agents["hyperresearch-width-critic.toml"]["model"] == "gpt-5.5"
     assert "model" not in agents["hyperresearch-patcher.toml"]
+    # Explicit model assignments still drive effort through the legacy mapping.
+    assert agents["hyperresearch-source-analyst.toml"]["model_reasoning_effort"] == "high"
+    assert agents["hyperresearch-loci-analyst.toml"]["model_reasoning_effort"] == "medium"
+    assert agents["hyperresearch-depth-investigator.toml"]["model_reasoning_effort"] == "medium"
+    assert "model" not in agents["hyperresearch-source-analyst.toml"]
 
 
 def test_codex_models_default_to_none_and_validate():

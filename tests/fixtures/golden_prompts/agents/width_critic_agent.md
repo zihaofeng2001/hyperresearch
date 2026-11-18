@@ -6,6 +6,7 @@ description: >
   but the draft doesn't cover. Spawn ONCE per draft,
   parallel with dialectic-critic and depth-critic.
 model: opus
+effort: high
 tools: Bash, Read, Write
 color: red
 ---

@@ -29,7 +29,15 @@ Read these inputs:
 
 ## Procedure
 
-1. **Spawn K `hyperresearch-depth-investigator` subagents in parallel** (<% if platform == "codex" %>custom agent `.codex/agents/hyperresearch-depth-investigator.toml` — spawn all K now, in parallel, and wait for all of them<% else %>ONE message, all Task calls<% endif %>). One per locus with `source_budget > 0`, capped at << p.investigator_max >>.
+1. **Spawn K `hyperresearch-depth-investigator` subagents in parallel** (<% if platform == "codex" %>custom agent `.codex/agents/hyperresearch-depth-investigator.toml` — spawn all K now, in parallel, and wait for all of them<% else %>ONE message, all Task calls<% endif %>). One per locus with `source_budget > 0`, capped at << p.investigator_max >>.<% if platform == "claude" %>
+
+   **Investigation effort.** Among the loci being investigated, take up to two
+   with `decision_impact >= 8`, ranked by `decision_impact` and then
+   `composite_score` (highest first). Pass `effort: xhigh` for those loci
+   when the Agent tool accepts `effort` and the investigator's resolved model
+   supports `xhigh`. Check provider alias mappings and runtime overrides for
+   `<< p.models.depth_investigator >>`. Use the investigator's configured effort for all
+   other calls, including when model support is unknown.<% endif %>
 
    **Spawn template:**
    ```

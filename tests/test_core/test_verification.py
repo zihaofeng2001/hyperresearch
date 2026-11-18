@@ -1307,7 +1307,7 @@ class TestCiteCheckerAgentInstall:
         assert result is not None
         body = (tmp_vault.root / ".claude" / "agents" / "hyperresearch-cite-checker.md").read_text(encoding="utf-8")
         assert "name: hyperresearch-cite-checker" in body
-        assert "model: sonnet" in body
+        assert "model: opus" in body
         assert "wrong-source" in body
         assert "SKEPTICAL" in body
         assert "{hpr_path}" not in body

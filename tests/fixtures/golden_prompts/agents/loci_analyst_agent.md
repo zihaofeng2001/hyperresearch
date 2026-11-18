@@ -8,7 +8,8 @@ description: >
   parallel; the orchestrator dedupes their outputs. Identifying genuine
   rabbitholes requires real reading comprehension and judgment about
   what is load-bearing evidence vs. surface detail.
-model: sonnet
+model: opus
+effort: high
 tools: Bash, Read, Write
 color: green
 ---

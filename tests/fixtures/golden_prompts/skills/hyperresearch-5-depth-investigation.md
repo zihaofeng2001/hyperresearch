@@ -31,6 +31,14 @@ Read these inputs:
 
 1. **Spawn K `hyperresearch-depth-investigator` subagents in parallel** (ONE message, all Task calls). One per locus with `source_budget > 0`, capped at 6.
 
+   **Investigation effort.** Among the loci being investigated, take up to two
+   with `decision_impact >= 8`, ranked by `decision_impact` and then
+   `composite_score` (highest first). Pass `effort: xhigh` for those loci
+   when the Agent tool accepts `effort` and the investigator's resolved model
+   supports `xhigh`. Check provider alias mappings and runtime overrides for
+   `opus`. Use the investigator's configured effort for all
+   other calls, including when model support is unknown.
+
    **Spawn template:**
    ```
    subagent_type: hyperresearch-depth-investigator

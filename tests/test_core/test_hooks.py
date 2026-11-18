@@ -160,7 +160,7 @@ def test_install_loci_analyst_agent(tmp_vault):
     agent_path = tmp_vault.root / ".claude" / "agents" / "hyperresearch-loci-analyst.md"
     assert agent_path.exists()
     body = agent_path.read_text(encoding="utf-8")
-    assert "model: sonnet" in body
+    assert "model: opus" in body
     assert "corpus_evidence" in body
     assert "analyst_id" in body
     assert result is not None
@@ -171,7 +171,7 @@ def test_install_depth_investigator_agent(tmp_vault):
     agent_path = tmp_vault.root / ".claude" / "agents" / "hyperresearch-depth-investigator.md"
     assert agent_path.exists()
     body = agent_path.read_text(encoding="utf-8")
-    assert "model: sonnet" in body
+    assert "model: opus" in body
     # Depth investigator must have Task tool so it can spawn fetcher subagents
     assert "Task" in body
     assert "interim" in body.lower()
@@ -180,15 +180,15 @@ def test_install_depth_investigator_agent(tmp_vault):
 
 
 def test_install_source_analyst_agent(tmp_vault):
-    """The source-analyst reads ONE long source end-to-end on Sonnet's 1M
-    context window and produces a structured source-analysis note
+    """The source-analyst reads ONE long source end-to-end
+    and produces a structured source-analysis note
     backlinked to the original. Leaf subagent — no Task tool (no
     recursive spawns)."""
     result = _install_source_analyst_agent(tmp_vault.root, "hyperresearch")
     agent_path = tmp_vault.root / ".claude" / "agents" / "hyperresearch-source-analyst.md"
     assert agent_path.exists()
     body = agent_path.read_text(encoding="utf-8")
-    assert "model: sonnet" in body
+    assert "model: opus" in body
     # Leaf subagent: no Task, cannot spawn other subagents
     assert "tools: Bash, Read, Write" in body
     tools_line = body.split("tools:")[1].split("\n")[0]

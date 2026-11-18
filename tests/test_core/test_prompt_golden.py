@@ -7,7 +7,7 @@ profiles and the templates shows up here as a diff — changing a profile value
 or template deliberately requires updating the golden, which makes prompt
 changes reviewable instead of silent.
 
-Deliberate deviations already folded into the goldens (2026-07-19):
+Deliberate changes captured in the goldens
   - Untrusted-source policy (2026-07-20): RESEARCHER_AGENT and
     DEPTH_INVESTIGATOR_AGENT gained the "Untrusted content policy" block
     (fetched note bodies arrive fenced in <untrusted-source> delimiters and
@@ -122,6 +122,9 @@ Deliberate deviations already folded into the goldens (2026-07-19):
     position describes the tightened triage — a sentence with a 2+-digit
     figure auto-passes only on a full claim or quote match, a sentence
     without one on a long shared word run.
+  - Claude Code uses Opus for analysis and Sonnet for fetchers. Agent
+    frontmatter pins effort by role, and step 5 raises effort for up to two
+    high-impact investigations.
 """
 
 from __future__ import annotations
@@ -333,18 +336,23 @@ def _frontmatter_model(path: Path) -> str:
     raise AssertionError(f"{path.name} has no model: frontmatter line")
 
 
-def test_installed_agent_models_come_from_profile(tmp_vault):
-    """Every installed agent's model: line equals its ModelMap assignment."""
+def test_installed_agent_models_and_effort(tmp_vault):
+    """Claude agents receive their profile model and role's effort."""
+    from hyperresearch.core.codex import split_frontmatter
     from hyperresearch.core.hooks import install_hooks
     from hyperresearch.core.profiles import resolve_profile
 
     install_hooks(tmp_vault.root, hpr_path="hyperresearch")
     models = resolve_profile("full").models
     agents_dir = tmp_vault.root / ".claude" / "agents"
+    medium_effort_roles = {"polish_auditor", "readability_recommender"}
     for filename, field in AGENT_FILE_MODEL_FIELD.items():
         path = agents_dir / filename
         assert path.exists(), f"agent not installed: {filename}"
-        assert _frontmatter_model(path) == getattr(models, field), filename
+        frontmatter, _ = split_frontmatter(path.read_text(encoding="utf-8"))
+        assert frontmatter["model"] == getattr(models, field), filename
+        expected_effort = "medium" if field in medium_effort_roles else "high"
+        assert frontmatter["effort"] == expected_effort, filename
 
 
 def test_haiku_fetcher_overlay_reaches_installed_agent(tmp_vault):
@@ -360,7 +368,7 @@ def test_haiku_fetcher_overlay_reaches_installed_agent(tmp_vault):
     install_hooks(tmp_vault.root, hpr_path="hyperresearch")
     agents_dir = tmp_vault.root / ".claude" / "agents"
     assert _frontmatter_model(agents_dir / "hyperresearch-fetcher.md") == "haiku"
-    assert _frontmatter_model(agents_dir / "hyperresearch-source-analyst.md") == "sonnet"
+    assert _frontmatter_model(agents_dir / "hyperresearch-source-analyst.md") == "opus"
     assert _frontmatter_model(agents_dir / "hyperresearch-patcher.md") == "opus"
 
 

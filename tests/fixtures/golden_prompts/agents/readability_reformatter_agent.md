@@ -10,6 +10,7 @@ description: >
   Tool-locked to [Read, Write] — cannot Edit. The orchestrator decides
   which recommendations to apply via direct Edit calls.
 model: opus
+effort: medium
 tools: Read, Write
 color: magenta
 ---

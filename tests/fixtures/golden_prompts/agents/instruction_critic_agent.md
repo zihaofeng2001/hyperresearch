@@ -10,6 +10,7 @@ description: >
   comparison tables) that reference reports consistently include.
   Spawn ONCE per draft, in parallel with the other three critics.
 model: opus
+effort: high
 tools: Bash, Read, Write
 color: red
 ---

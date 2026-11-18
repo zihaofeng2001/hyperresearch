@@ -7,6 +7,7 @@ description: >
   actually support. Spawn ONCE per draft, parallel with
   dialectic-critic and width-critic.
 model: opus
+effort: high
 tools: Bash, Read, Write
 color: red
 ---

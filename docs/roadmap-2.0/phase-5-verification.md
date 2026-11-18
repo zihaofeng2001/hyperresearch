@@ -1,5 +1,7 @@
 # Phase 5 — Verification: the layer that makes it better than a human
 
+> The Sonnet references in this roadmap record the original cost decision. The current Claude Code default for citation checks is Opus at `high`, following mechanical triage and sampling. [Current subagent roster](../../README.md#subagent-roster)
+
 ## Goal
 
 Verification density no human researcher sustains: every citation checked against its source, every quote mechanically verified verbatim, every number traced to extracted evidence, every cited DOI swept for retractions, consensus counted only across *independent* sources — plus telemetry that makes pipeline tuning data-driven and a bench gate that stops prompt regressions from shipping. This is where machine research stops being merely faster and becomes more trustworthy.

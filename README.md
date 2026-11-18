@@ -173,6 +173,8 @@ The entry skill is a thin router. It pins down the canonical research query, the
 | `full` (default) | deep argumentative analysis with adversarial review: all 16 steps + cite-check | ~1.5–2.5 h at `full` gear |
 | `dissertation` (experimental) | chaptered mega-runs: 300–450 sources across 4–10 chapters, 25K–80K words | ~4–8 hours |
 
+These runtime estimates predate the current Claude Code model and effort defaults. Recalibration awaits new benchmark results.
+
 **Gears** set the scale of the standard pipeline: the source targets, depth budgets, and word targets rendered into the step skills.
 
 ```bash
@@ -208,28 +210,44 @@ hyperresearch run status -j                                      # see what step
 
 2. **Canonical research query is gospel.** The verbatim user prompt is persisted to `research/runs/<vault_tag>/query.md` once and re-read by every subsequent step and every spawned subagent. Wrapper requirements (save paths, citation format, terminal sections) are a separate contract.
 
+### Claude Code main session
+
+For a `full` run, we recommend Fable at `xhigh` when available.
+
+```sh
+claude --model fable --effort xhigh
+```
+
+The main session builds the contradiction graph (3), ranks investigation topics and assigns source budgets (4), reconciles findings across topics (6), weighs source disagreements (7), assembles the evidence digest (9), and resolves factual conflicts and chooses the report's thesis before synthesis (11).
+
+Use `--effort` or `/effort` for the main session and leave `CLAUDE_CODE_EFFORT_LEVEL` unset to use role-specific effort. That environment variable takes precedence over subagent frontmatter and per-call settings, including step 5's `xhigh` request. [Claude Code effort precedence](https://code.claude.com/docs/en/sub-agents#choose-an-effort-level)
+
 ### Subagent roster
 
 Models are profile config, not hardcode. The table shows the shipped defaults, and you can override any of them in `.hyperresearch/config.toml`: `[profile.full]` with `models = { fetcher = "haiku" }` swaps every fetcher to Haiku on the next install or `profile use`.
 
-| Agent | Default model | Role |
-|---|---|---|
-| `hyperresearch-fetcher` | Sonnet | URL fetching via crawl4ai; runs 8–12 in parallel per wave |
-| `hyperresearch-source-analyst` | Sonnet | End-to-end digest of any single long source >5000 words |
-| `hyperresearch-loci-analyst` | Sonnet | Reads the width corpus, returns 1–8 depth loci with rationale |
-| `hyperresearch-depth-investigator` | Sonnet | Investigates one locus, writes one interim note with a committed position |
-| `hyperresearch-corpus-critic` | Sonnet | "What source would overturn the current direction?" pre-draft gap analysis |
-| `hyperresearch-draft-orchestrator` | Opus | One per draft angle; reads its curated source list and writes one draft |
-| `hyperresearch-synthesizer` | Opus | Reads all 3 drafts, writes the final report (two-pass write, Read+Write locked) |
-| `hyperresearch-dialectic-critic` | Opus | Counter-evidence the draft missed |
-| `hyperresearch-depth-critic` | Opus | Shallow spots interim notes could fill |
-| `hyperresearch-width-critic` | Opus | Topical corners the corpus supports but the draft ignores |
-| `hyperresearch-instruction-critic` | Opus | Structural mismatches against the prompt's atomic items |
-| `hyperresearch-patcher` | Opus | Tool-locked `[Read, Edit]`. Applies critic findings as surgical Edit hunks |
-| `hyperresearch-cite-checker` | Sonnet | Skeptically verifies sampled citation-sentence bindings before ship |
-| `hyperresearch-polish-auditor` | Opus | Tool-locked `[Read, Edit]`. Cuts filler, strips hygiene leaks |
-| `hyperresearch-readability-recommender` | Opus | Writes JSON suggestions for paragraph rhythm and list/table conversion |
-| `hyperresearch-browser-fetcher` | Sonnet | Drains the escalation queue by driving your real Chrome (Claude-in-Chrome) |
+| Agent | Claude Code model | Effort | Role |
+|---|---|---|---|
+| `hyperresearch-fetcher` | Sonnet | `high` | URL fetching via crawl4ai (8–12 in parallel per wave) |
+| `hyperresearch-source-analyst` | Opus | `high` | End-to-end digest of any single long source >5000 words |
+| `hyperresearch-loci-analyst` | Opus | `high` | Reads the width corpus, returns 1–8 depth loci with rationale |
+| `hyperresearch-depth-investigator` | Opus | `high` | Investigates one locus, writes one interim note with a committed position |
+| `hyperresearch-corpus-critic` | Opus | `high` | "What source would overturn the current direction?" pre-draft gap analysis |
+| `hyperresearch-draft-orchestrator` | Opus | `high` | One per draft angle. Reads its curated source list and writes one draft. |
+| `hyperresearch-synthesizer` | Opus | `high` | Reads all 3 drafts, writes the final report (two-pass write, Read+Write locked) |
+| `hyperresearch-dialectic-critic` | Opus | `high` | Counter-evidence the draft missed |
+| `hyperresearch-depth-critic` | Opus | `high` | Shallow spots interim notes could fill |
+| `hyperresearch-width-critic` | Opus | `high` | Topical corners the corpus supports but the draft ignores |
+| `hyperresearch-instruction-critic` | Opus | `high` | Structural mismatches against the prompt's atomic items |
+| `hyperresearch-patcher` | Opus | `high` | Tool-locked `[Read, Edit]`. Applies critic findings as surgical Edit hunks |
+| `hyperresearch-cite-checker` | Opus | `high` | Skeptically verifies sampled citation-sentence bindings before ship |
+| `hyperresearch-polish-auditor` | Opus | `medium` | Tool-locked `[Read, Edit]`. Cuts filler, strips hygiene leaks |
+| `hyperresearch-readability-recommender` | Opus | `medium` | Writes JSON suggestions for paragraph rhythm and list/table conversion |
+| `hyperresearch-browser-fetcher` | Sonnet | `high` | Drains the escalation queue by driving your real Chrome (Claude-in-Chrome) |
+
+The fetchers use `high` effort for judging source relevance, following references to primary sources, and reading figures or evidence on complex pages. The `light` draft draws directly on the fetched notes. The regular fetcher also extracts structured claims with verbatim support, numbers, entities, and scope. In `full` runs, those claims feed the evidence digest in step 9 and the mechanical citation triage in step 14.5. Higher effort can increase usage across parallel batches.
+
+Step 5 requests `xhigh` for up to two high-impact investigations when the Agent tool supports per-call effort and the investigator's model supports `xhigh`.
 
 ---
 

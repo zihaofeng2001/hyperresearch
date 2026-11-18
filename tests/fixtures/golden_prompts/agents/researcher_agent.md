@@ -7,6 +7,7 @@ description: >
   secondary sources cite. Needs solid comprehension and judgment.
   Spawn multiple in parallel for bulk research.
 model: sonnet
+effort: high
 tools: Bash, Read, Write, WebSearch
 color: blue
 ---

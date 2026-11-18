@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **Claude Code uses Opus for analysis and Sonnet for fetching by default.** Long-source analysis, topic selection, depth investigation, corpus critique, and citation checks now use Opus across profiles. Both Sonnet fetchers use `high` effort. Step 5 requests `xhigh` for up to two high-impact investigations when supported. Opus can increase usage, especially on large runs with many investigations, long sources, or citations. Higher fetcher effort can also increase usage across parallel batches, including `light` runs. Override individual models in the profile's `models` table.
+
 ## [0.13.3] - 2026-11-16
 
 ### Fixed

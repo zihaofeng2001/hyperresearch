@@ -8,7 +8,8 @@ and no Read/Write/Edit tools. This module converts one to the other:
 
     frontmatter name / description  -> TOML name / description (one line)
     frontmatter model               -> model_reasoning_effort ("high" for
-                                       opus-class roles, else "medium"); a
+                                       opus-class models, else "medium",
+                                       with Codex role defaults); a
                                        `model` key only when the profile sets
                                        a `codex_models` override for the role
     frontmatter tools               -> a preamble prepended to the body that
@@ -115,7 +116,7 @@ def parse_tools(value) -> list[str]:
 
 
 def reasoning_effort_for(claude_model: str | None) -> str:
-    """Roles Claude runs on an opus-class model get high effort on Codex."""
+    """Translate a model assignment into a Codex effort level."""
     return "high" if claude_model and "opus" in claude_model.lower() else "medium"
 
 
@@ -235,6 +236,7 @@ def agent_markdown_to_toml(
     *,
     header_comment: str,
     codex_model: str | None = None,
+    codex_effort: str | None = None,
 ) -> str:
     """Translate one rendered Claude markdown agent into Codex agent TOML.
 
@@ -248,7 +250,7 @@ def agent_markdown_to_toml(
         raise ValueError("agent frontmatter has no name")
     description = " ".join(str(meta.get("description", "")).split())
     tools = parse_tools(meta.get("tools"))
-    effort = reasoning_effort_for(meta.get("model"))
+    effort = codex_effort or reasoning_effort_for(meta.get("model"))
     instructions = codex_agent_preamble(name, tools) + body.lstrip("\n")
 
     lines = [

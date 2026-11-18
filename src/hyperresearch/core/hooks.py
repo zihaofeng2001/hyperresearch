@@ -139,6 +139,7 @@ description: >
   rabbitholes requires real reading comprehension and judgment about
   what is load-bearing evidence vs. surface detail.
 model: << p.models.loci_analyst >>
+effort: high
 tools: Bash, Read, Write
 color: green
 ---
@@ -345,6 +346,7 @@ description: >
   one depth-investigator per locus, in parallel. Synthesizing a
   narrow-but-deep question requires real reading comprehension.
 model: << p.models.depth_investigator >>
+effort: high
 tools: Bash, Read, Write, Task
 color: purple
 ---
@@ -634,6 +636,7 @@ description: >
   reasoning. Spawn ONCE per draft, in parallel with depth-critic and
   width-critic.
 model: << p.models.critics >>
+effort: high
 tools: Bash, Read, Write
 color: red
 ---
@@ -768,6 +771,7 @@ description: >
   actually support. Spawn ONCE per draft, parallel with
   dialectic-critic and width-critic.
 model: << p.models.critics >>
+effort: high
 tools: Bash, Read, Write
 color: red
 ---
@@ -886,6 +890,7 @@ description: >
   but the draft doesn't cover. Spawn ONCE per draft,
   parallel with dialectic-critic and depth-critic.
 model: << p.models.critics >>
+effort: high
 tools: Bash, Read, Write
 color: red
 ---
@@ -1046,6 +1051,7 @@ description: >
   comparison tables) that reference reports consistently include.
   Spawn ONCE per draft, in parallel with the other three critics.
 model: << p.models.critics >>
+effort: high
 tools: Bash, Read, Write
 color: red
 ---
@@ -1371,6 +1377,7 @@ description: >
   judgment about which findings serve the research_query and which are
   critic noise. Spawn ONCE after all four critics return.
 model: << p.models.patcher >>
+effort: high
 tools: Read, Edit
 color: orange
 ---
@@ -1548,6 +1555,7 @@ description: >
   calls about hedge-language require strong prose understanding.
   Spawn ONCE after the patcher finishes.
 model: << p.models.polish_auditor >>
+effort: medium
 tools: Read, Edit
 color: yellow
 ---
@@ -1916,6 +1924,7 @@ description: >
   then writes one complete draft from the assigned angle. The main
   orchestrator synthesizes a final report from all three drafts.
 model: << p.models.draft_orchestrator >>
+effort: high
 tools: Bash, Read, Write
 color: green
 ---
@@ -2121,6 +2130,7 @@ description: >
   voice, NOT section-grafted from the inputs. Tool-locked: Read + Write
   ONLY. Cannot Bash, cannot spawn subagents.
 model: << p.models.synthesizer >>
+effort: high
 tools: Read, Write
 color: cyan
 ---
@@ -2558,6 +2568,7 @@ description: >
   Tool-locked to [Read, Write] — cannot Edit. The orchestrator decides
   which recommendations to apply via direct Edit calls.
 model: << p.models.readability_recommender >>
+effort: medium
 tools: Read, Write
 color: magenta
 ---
@@ -2773,6 +2784,7 @@ description: >
   Spawn multiple in parallel for multiple independent long sources.
   Does NOT spawn any other subagents itself (leaf).
 model: << p.models.source_analyst >>
+effort: high
 tools: Bash, Read, Write
 color: cyan
 ---
@@ -2969,6 +2981,7 @@ description: >
   secondary sources cite. Needs solid comprehension and judgment.
   Spawn multiple in parallel for bulk research.
 model: << p.models.fetcher >>
+effort: high
 tools: Bash, Read, Write, WebSearch
 color: blue
 ---
@@ -3234,6 +3247,7 @@ description: >
   high-leverage missing sources. Spawn ONCE before
   drafting, after Layer 3.5 comparisons.
 model: << p.models.corpus_critic >>
+effort: high
 tools: Bash, Read, Write
 color: teal
 ---
@@ -3360,6 +3374,7 @@ description: >
   never attempts to solve CAPTCHAs, 2FA, or logins — those are marked
   needs_human and consolidated for the user.
 model: << p.models.browser_fetcher >>
+effort: high
 tools: Bash, Read, Write, ToolSearch
 color: orange
 ---
@@ -3482,9 +3497,11 @@ description: >
   Receives batches of (sentence, note_id) pairs the mechanical triage could
   not auto-pass; returns per-pair verdicts (supported / partially-supported /
   unsupported / wrong-source) as findings JSON the patcher consumes.
-  This is reading comprehension at volume, not prose judgment.
+  Compares the entity, metric, time period, and scope against the source,
+  especially when the same figure appears under different conditions.
   Never edits the report.
 model: << p.models.cite_checker >>
+effort: high
 tools: Bash, Read, Write
 color: red
 ---
@@ -3664,7 +3681,7 @@ def install_hooks(
 
     Hyperresearch roster (as of v7):
       fetcher (Layer 1, 3, 4), loci-analyst (Layer 2), depth-investigator (Layer 3),
-      source-analyst (on-demand, 1M context), corpus-critic (Layer 3.7),
+      source-analyst (on-demand long-source analysis), corpus-critic (Layer 3.7),
       draft-orchestrator (Layer 4, 3x parallel),
       dialectic-critic + depth-critic + width-critic + instruction-critic (Layer 5),
       patcher (Layer 6), polish-auditor (Layer 7).
@@ -3893,6 +3910,12 @@ def _write_agent_file(
 # the Codex translator reads the same role out of `p.codex_models`.
 _MODEL_ROLE_RE = re.compile(r"^model:\s*<<\s*p\.models\.(\w+)\s*>>", re.MULTILINE)
 
+# Codex retains medium effort for these roles by default. Explicit profile
+# model assignments still use the regular model-to-effort translation.
+_CODEX_MEDIUM_EFFORT_ROLES = {
+    "source_analyst", "loci_analyst", "depth_investigator", "corpus_critic", "cite_checker",
+}
+
 
 def _write_codex_agent_file(
     vault_root: Path, filename: str, content: str, label: str
@@ -3906,14 +3929,19 @@ def _write_codex_agent_file(
 
     role_match = _MODEL_ROLE_RE.search(content)
     codex_model = None
+    codex_effort = None
     if role_match:
-        codex_models = _get_render_state()["context"]["p"].codex_models
-        codex_model = getattr(codex_models, role_match.group(1), None)
+        role = role_match.group(1)
+        profile = _get_render_state()["context"]["p"]
+        codex_model = getattr(profile.codex_models, role, None)
+        if role in _CODEX_MEDIUM_EFFORT_ROLES and role not in profile.models.model_fields_set:
+            codex_effort = "medium"
 
     rendered = agent_markdown_to_toml(
         _render_installed(content, header=False),
         header_comment=_provenance_header(),
         codex_model=codex_model,
+        codex_effort=codex_effort,
     )
 
     agents_dir = vault_root / paths.agents_dir

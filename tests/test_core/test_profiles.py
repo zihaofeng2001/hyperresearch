@@ -260,7 +260,7 @@ class TestUserOverlay:
         p = resolve_profile("full", cfg)
         assert p.models.fetcher == "haiku"
         # unspecified agents keep their defaults
-        assert p.models.source_analyst == "sonnet"
+        assert p.models.source_analyst == "opus"
         assert p.models.synthesizer == "opus"
 
     def test_models_overlay_accepts_full_model_ids(self, tmp_path: Path):

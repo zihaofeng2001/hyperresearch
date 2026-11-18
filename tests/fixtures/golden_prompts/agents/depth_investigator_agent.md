@@ -8,7 +8,8 @@ description: >
   writes ONE interim report note summarizing what it learned. Spawn
   one depth-investigator per locus, in parallel. Synthesizing a
   narrow-but-deep question requires real reading comprehension.
-model: sonnet
+model: opus
+effort: high
 tools: Bash, Read, Write, Task
 color: purple
 ---

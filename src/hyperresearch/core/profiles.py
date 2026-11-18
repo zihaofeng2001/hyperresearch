@@ -50,11 +50,11 @@ class ModelMap(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, protected_namespaces=())
 
     fetcher: str = "sonnet"
-    source_analyst: str = "sonnet"
-    loci_analyst: str = "sonnet"
-    depth_investigator: str = "sonnet"
-    corpus_critic: str = "sonnet"
-    cite_checker: str = "sonnet"
+    source_analyst: str = "opus"
+    loci_analyst: str = "opus"
+    depth_investigator: str = "opus"
+    corpus_critic: str = "opus"
+    cite_checker: str = "opus"
     browser_fetcher: str = "sonnet"
     draft_orchestrator: str = "opus"
     synthesizer: str = "opus"

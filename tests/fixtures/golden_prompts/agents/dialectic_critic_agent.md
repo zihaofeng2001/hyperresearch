@@ -7,6 +7,7 @@ description: >
   reasoning. Spawn ONCE per draft, in parallel with depth-critic and
   width-critic.
 model: opus
+effort: high
 tools: Bash, Read, Write
 color: red
 ---

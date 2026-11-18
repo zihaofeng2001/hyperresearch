@@ -6,9 +6,11 @@ description: >
   Receives batches of (sentence, note_id) pairs the mechanical triage could
   not auto-pass; returns per-pair verdicts (supported / partially-supported /
   unsupported / wrong-source) as findings JSON the patcher consumes.
-  This is reading comprehension at volume, not prose judgment.
+  Compares the entity, metric, time period, and scope against the source,
+  especially when the same figure appears under different conditions.
   Never edits the report.
-model: sonnet
+model: opus
+effort: high
 tools: Bash, Read, Write
 color: red
 ---
